@@ -5,12 +5,8 @@ export class UserRepository implements UserRepositoryLike {
 
     constructor(private storage: StorageLike) {}
 
-    get(id: string): Promise<UserLike | null> {
-        return this.storage.get<UserLike>([this._key, id]);
-    }
-
-    getByTelegramId(telegramId: number): Promise<UserLike | null> {
-        return this.storage.get<UserLike>(this._buildKey(telegramId));
+    find(user: UserLike): Promise<UserLike | null> {
+        return this.storage.get<UserLike>([this._key, user.telegramId]);
     }
 
     async store(user: UserLike): Promise<void> {

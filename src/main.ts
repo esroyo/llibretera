@@ -35,7 +35,7 @@ bot.command(
         console.log(ctx);
         const sender = User.from(ctx);
         if (!sender) return;
-        const user = await userRepository.getByTelegramId(sender.telegramId);
+        const user = await userRepository.find(sender);
         if (!user) {
             await userRepository.store(sender);
             ctx.reply(

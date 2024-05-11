@@ -13,8 +13,7 @@ export type UserLike = {
 };
 
 export type UserRepositoryLike = {
-    get(id: string): Promise<UserLike | null>;
-    getByTelegramId(telegramId: TelegramId): Promise<UserLike | null>;
+    find(user: UserLike): Promise<UserLike | null>;
     store(user: UserLike): Promise<void>;
 };
 
