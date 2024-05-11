@@ -2,8 +2,8 @@
   "version": "0.0.0",
   "tasks": {
     "coverage": "rm -rf coverage && deno task test --reporter=dot --coverage=coverage && deno coverage --lcov --output=coverage.lcov coverage && genhtml -o coverage/report coverage.lcov",
-    "deploy-prod": "deployctl deploy --prod --project=llibretera-bot --entrypoint src/main.ts --exclude=coverage",
-    "deploy": "deployctl deploy --project=llibretera-bot --entrypoint src/main.ts --exclude=coverage",
+    "deploy-prod": "deployctl deploy --prod --project=llibretera --entrypoint src/main.ts --exclude=coverage",
+    "deploy": "deployctl deploy --project=llibretera --entrypoint src/main.ts --exclude=coverage",
     "dev": "deno run --watch --allow-env --allow-read --allow-net --allow-hrtime --unstable-kv src/main.ts",
     "fmt": "deno fmt src/ deps.ts dev_deps.ts",
     "tag-version": "npx commit-and-tag-version && git push --follow-tags origin main",
