@@ -1,20 +1,25 @@
 export type Config = {
-    BOT_TOKEN: string;
+    CLIENT_SECRET_TOKEN: string;
+    SELF_ORIGIN: string;
+    TELEGRAM_BOT_TOKEN: string;
 };
 
-export type TelegramId = number;
+export type HttpVerb = 'GET' | 'PATCH' | 'PUT' | 'POST' | 'DELETE';
+
+export type TelegramId = string;
 
 export type UserLike = {
-    id: string;
+    userId: string;
     userName?: string;
     firstName: string;
     lastName?: string;
     telegramId: TelegramId;
+    languageCode?: string;
 };
 
 export type UserRepositoryLike = {
-    find(user: UserLike): Promise<UserLike | null>;
-    store(user: UserLike): Promise<void>;
+    get(user: Partial<UserLike>): Promise<UserLike | null>;
+    put(user: UserLike): Promise<UserLike | null>;
 };
 
 export type StorageSetOptions = {
@@ -30,3 +35,14 @@ export interface StorageLike {
     ): Promise<void>;
     close(): Promise<void>;
 }
+
+declare global {
+    interface Body<T = any> {
+        json<U = T>(): Promise<U>;
+    }
+    interface Response<T = any> extends Body<T> {}
+}
+
+export type ResponseContent<T> = T extends null | undefined ? T
+    : T extends Response<infer F> ? F
+    : T;

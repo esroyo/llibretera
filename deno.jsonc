@@ -4,7 +4,7 @@
     "coverage": "rm -rf coverage && deno task test --reporter=dot --coverage=coverage && deno coverage --lcov --output=coverage.lcov coverage && genhtml -o coverage/report coverage.lcov",
     "deploy-prod": "deployctl deploy --prod --project=llibretera --entrypoint src/main.ts --exclude=coverage",
     "deploy": "deployctl deploy --project=llibretera --entrypoint src/main.ts --exclude=coverage",
-    "dev": "deno run --watch --allow-env --allow-read --allow-net --allow-hrtime --unstable-kv src/main.ts",
+    "dev": "deno run --inspect --watch --allow-env --allow-read --allow-net --allow-hrtime --unstable-kv src/main.ts",
     "fmt": "deno fmt src/ deps.ts dev_deps.ts",
     "tag-version": "npx commit-and-tag-version && git push --follow-tags origin main",
     "test": "deno test --allow-env --allow-read --allow-hrtime --unstable-kv"
@@ -21,5 +21,10 @@
     ],
     "include": [],
     "entrypoint": "src/main.ts"
+  },
+  "compilerOptions": {
+    // true:  enable TypeScript decorators
+    // false: enable ECMAScript decorators
+    "experimentalDecorators": false
   }
 }
