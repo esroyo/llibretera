@@ -4,7 +4,14 @@ export type Config = {
     TELEGRAM_BOT_TOKEN: string;
 };
 
-export type HttpVerb = 'GET' | 'PATCH' | 'PUT' | 'POST' | 'DELETE';
+export type HttpVerb =
+    | 'HEAD'
+    | 'GET'
+    | 'OPTIONS'
+    | 'PATCH'
+    | 'PUT'
+    | 'POST'
+    | 'DELETE';
 
 export type TelegramId = string;
 
@@ -46,3 +53,11 @@ declare global {
 export type ResponseContent<T> = T extends null | undefined ? T
     : T extends Response<infer F> ? F
     : T;
+
+export type RequestWithUrlPattern = Request & { urlPattern?: URLPattern };
+
+export type PartialHonoContext = {
+    req: {
+        raw: RequestWithUrlPattern;
+    };
+};

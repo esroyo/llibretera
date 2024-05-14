@@ -73,27 +73,25 @@ bot.on('message', (ctx) => {
 
 const app = new Hono();
 
-app.use(async (c, next) => {
-    if (c.req.path.startsWith('/api')) {
-        const secretToken = c.req.raw.headers.get('x-authorization');
-        const isAuthorized = secretToken && (
-            secretToken === config.CLIENT_SECRET_TOKEN ||
-            secretToken.slice(7) === config.CLIENT_SECRET_TOKEN
-        );
-        if (!isAuthorized) {
-            return new Response('Unauthorized', { status: 401 });
-        }
+const apiAuth = async ({ req: { raw: request } }, next) => {
+    const secretToken = request.headers.get('x-authorization');
+    const isAuthorized = secretToken && (
+        secretToken === config.CLIENT_SECRET_TOKEN ||
+        secretToken.slice(7) === config.CLIENT_SECRET_TOKEN
+    );
+    if (!isAuthorized) {
+        return new Response('Unauthorized', { status: 401 });
     }
     return next();
-});
+};
 
 app.post(
     '/bot',
     webhookCallback(bot, 'hono', { secretToken: config.CLIENT_SECRET_TOKEN }),
 );
 
-app.put('/api/users', api['PUT /api/users']);
-app.get('/api/users/:key/:id', api['GET /api/users/:key/:id']);
+app.put('/api/users', apiAuth, api['PUT /api/users']);
+app.get('/api/users/:key/:id', apiAuth, api['GET /api/users/:key/:id']);
 
 app.get('/', (_ctx) => {
     return new Response(

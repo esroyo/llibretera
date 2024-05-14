@@ -2,40 +2,40 @@ import { type HonoContext } from '../deps.ts';
 import type {
     Config,
     HttpVerb,
+    PartialHonoContext,
     ResponseContent,
     UserLike,
     UserRepositoryLike,
 } from './types.ts';
 
-function withPattern(
-    originalMethod: any,
+function withUrlPattern(
+    originalMethod: Api[Extract<keyof Api, `${HttpVerb} ${string}`>],
     context: ClassMethodDecoratorContext<Api>,
 ) {
     const methodName = String(context.name);
     const [_verb, pathname] = methodName.split(' ');
-    function replacementMethod(this: any, ...args: any[]) {
-        this._currentUrlPattern = this._buildPattern(pathname);
-        const result = originalMethod.apply(this, args);
-        this._currentUrlPattern = null;
-        return result;
+    function replacementMethod(
+        this: Api,
+        ctx: PartialHonoContext,
+    ): Promise<Response> {
+        ctx.req.raw.urlPattern = this._buildUrlPattern(pathname);
+        return originalMethod.call(this, ctx);
     }
     return replacementMethod;
 }
 
 export class Api {
     protected _urlPatterns: Map<string, URLPattern> = new Map();
-    protected _currentUrlPattern: URLPattern | null = null;
 
     constructor(
         protected _config: Config,
         protected _userRepository: UserRepositoryLike,
     ) {}
 
-    @withPattern
+    @withUrlPattern
     async ['PUT /api/users'](
-        ctx: HonoContext | Request,
+        { req: { raw: request } }: PartialHonoContext,
     ): Promise<Response<boolean>> {
-        const request = this._takeRequest(ctx);
         const userCandidate = await request.json<UserLike>();
         const createdUser = await this._userRepository.put(userCandidate);
         return createdUser
@@ -43,13 +43,11 @@ export class Api {
             : new Response('Conflict', { status: 409 });
     }
 
-    @withPattern
+    @withUrlPattern
     async ['GET /api/users/:key/:id'](
-        ctx: HonoContext | Request,
+        { req: { raw: request } }: PartialHonoContext,
     ): Promise<Response<UserLike>> {
-        const request = this._takeRequest(ctx);
-        const params = this._currentUrlPattern?.exec(request.url)?.pathname
-            .groups;
+        const params = request.urlPattern?.exec(request.url)?.pathname.groups;
         let existingUser: UserLike | null = null;
         if (params?.key && params?.id) {
             existingUser = await this._userRepository.get({
@@ -61,7 +59,7 @@ export class Api {
             : new Response('Not Found', { status: 404 });
     }
 
-    async resolve<T extends Extract<keyof Api, `${HttpVerb}${string}`>>(
+    async resolve<T extends Extract<keyof Api, `${HttpVerb} ${string}`>>(
         resource: T,
         fetchInput: string | URL | Request,
         fetchInit?: RequestInit | undefined,
@@ -74,7 +72,8 @@ export class Api {
                 : fetchInput,
             fetchInit,
         );
-        const response = await this[resource](request);
+        const synthHonoContext: PartialHonoContext = { req: { raw: request } };
+        const response = await this[resource](synthHonoContext);
         if (!response.ok) {
             return null;
         }
@@ -83,11 +82,7 @@ export class Api {
             : {}) as ResponseContent<Awaited<ReturnType<Api[T]>>>;
     }
 
-    protected _takeRequest(ctx: HonoContext | Request): Request {
-        return ctx instanceof Request ? ctx : ctx.req.raw;
-    }
-
-    protected _buildPattern(pathname: string): URLPattern {
+    protected _buildUrlPattern(pathname: string): URLPattern {
         if (this._urlPatterns.has(pathname)) {
             return this._urlPatterns.get(pathname) as URLPattern;
         }
