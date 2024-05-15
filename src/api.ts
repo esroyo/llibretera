@@ -1,4 +1,3 @@
-import { type HonoContext } from '../deps.ts';
 import type {
     Config,
     HttpVerb,
@@ -7,6 +6,20 @@ import type {
     UserLike,
     UserRepositoryLike,
 } from './types.ts';
+
+let urlPatterns: Map<string, URLPattern>;
+
+function createUrlPattern(pathname: string): URLPattern {
+    if (!urlPatterns) {
+        urlPatterns = new Map<string, URLPattern>();
+    }
+    if (urlPatterns.has(pathname)) {
+        return urlPatterns.get(pathname) as URLPattern;
+    }
+    const urlPattern = new URLPattern({ pathname });
+    urlPatterns.set(pathname, urlPattern);
+    return urlPattern;
+}
 
 function withUrlPattern(
     originalMethod: Api[Extract<keyof Api, `${HttpVerb} ${string}`>],
@@ -18,15 +31,13 @@ function withUrlPattern(
         this: Api,
         ctx: PartialHonoContext,
     ): Promise<Response> {
-        ctx.req.raw.urlPattern = this._buildUrlPattern(pathname);
+        ctx.req.raw.urlPattern = createUrlPattern(pathname);
         return originalMethod.call(this, ctx);
     }
     return replacementMethod;
 }
 
 export class Api {
-    protected _urlPatterns: Map<string, URLPattern> = new Map();
-
     constructor(
         protected _config: Config,
         protected _userRepository: UserRepositoryLike,
@@ -80,14 +91,5 @@ export class Api {
         return (response.headers.get('content-type') === 'application/json'
             ? response.json()
             : {}) as ResponseContent<Awaited<ReturnType<Api[T]>>>;
-    }
-
-    protected _buildUrlPattern(pathname: string): URLPattern {
-        if (this._urlPatterns.has(pathname)) {
-            return this._urlPatterns.get(pathname) as URLPattern;
-        }
-        const urlPattern = new URLPattern({ pathname });
-        this._urlPatterns.set(pathname, urlPattern);
-        return urlPattern;
     }
 }
